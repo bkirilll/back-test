@@ -1,21 +1,18 @@
-package ru.dictation.entities;
+package ru.dictation.dto;
 
-
-import jakarta.persistence.*;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import ru.dictation.entities.Question;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Entity
-@Table(name = "question_answer")
-public class QuestionAnswer {
+@Builder
+public class QuestionAnswerDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @NonNull
     Long id;
 
@@ -26,8 +23,6 @@ public class QuestionAnswer {
     @NonNull
     boolean validaty;
 
-    @ManyToOne
-    Question question;
-
-
+    @NonNull
+    Long questionId;
 }
