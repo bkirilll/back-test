@@ -1,6 +1,5 @@
 package ru.dictation.entities;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -11,23 +10,16 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "question_answer")
-public class QuestionAnswer {
+@Table(name = "city")
+public class City {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @NonNull
     Long id;
 
-
     @NonNull
-    String text;
-
-    @NonNull
-    boolean validaty;
+    String city;
 
     @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
-    Question question;
-
-
+    Region region;
 }

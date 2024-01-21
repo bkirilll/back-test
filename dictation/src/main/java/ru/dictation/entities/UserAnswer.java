@@ -7,16 +7,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "users_answer")
-public class User {
+public class UserAnswer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id_user")
     Long id;
 
@@ -38,6 +40,16 @@ public class User {
     @Column(name = "email")
     String mail;
 
-    @Column(name = "accuracy")
+    @Column(name = "accuracy(%)")
     int accuracy;
+
+    @Column(name = "identifier")
+    String identifier;
+
+    LocalDateTime dateOfCreated;
+
+    @PrePersist
+    void init() {
+        dateOfCreated = LocalDateTime.now();
+    }
 }

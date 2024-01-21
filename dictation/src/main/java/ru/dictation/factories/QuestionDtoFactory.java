@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 import ru.dictation.dto.QuestionAnswerDto;
 import ru.dictation.dto.QuestionDto;
+import ru.dictation.entities.Chapter;
 import ru.dictation.entities.Question;
 import ru.dictation.entities.QuestionAnswer;
 
@@ -18,15 +19,19 @@ public class QuestionDtoFactory {
 
     QuestionAnswerDtoFactory questionAnswerDtoFactory;
 
+    ChapterDtoFactory chapterDtoFactory;
+
     public QuestionDto makeQuestionDto(Question question) {
 
         return QuestionDto.builder()
                 .id(question.getId())
                 .text(question.getText())
-                .type(question.getType())
+                .chapter(
+                        chapterDtoFactory.makeChapterDto(question.getChapter())
+                )
                 .answers(
                         question
-                                .getAnswerList()
+                                .getAnswers()
                                 .stream()
                                 .map(questionAnswerDtoFactory::makeQuestionAnswerDto)
                                 .collect(Collectors.toList())

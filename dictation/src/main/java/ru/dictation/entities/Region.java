@@ -1,9 +1,11 @@
 package ru.dictation.entities;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -11,23 +13,20 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "question_answer")
-public class QuestionAnswer {
+@Table(name = "region")
+public class Region {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @NonNull
     Long id;
 
-
     @NonNull
-    String text;
+    String region;
 
-    @NonNull
-    boolean validaty;
-
-    @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
-    Question question;
-
+    @Builder.Default
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "region_id", referencedColumnName = "id")
+    List<City> cities = new ArrayList<>();
 
 }

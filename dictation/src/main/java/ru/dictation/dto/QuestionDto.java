@@ -3,6 +3,7 @@ package ru.dictation.dto;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import ru.dictation.entities.Chapter;
 import ru.dictation.entities.Question;
 import ru.dictation.entities.QuestionAnswer;
 
@@ -23,7 +24,7 @@ public class QuestionDto {
     String text;
 
     @NonNull
-    String type;
+    ChapterDto chapter;
 
     @NonNull
     List<QuestionAnswerDto> answers;
