@@ -1,6 +1,5 @@
 package ru.dictation.services;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,11 +16,10 @@ public class UserAnswerService {
 
     private UserAnswerRepository userAnswerRepository;
 
-    public List<UserAnswer> exportUserAnswerToExcel(HttpServletResponse response) throws IOException {
+    public List<UserAnswer> exportUserAnswerToExcel(HttpServletResponse response, String gender, String region, String city, String identifier, int firstAge, int secondAge) throws IOException {
 
-        List<UserAnswer> answers = userAnswerRepository.findAll();
-        System.out.println(answers);
-        ExcelExportUtils exportUtils = new ExcelExportUtils(answers);
+        List<UserAnswer> answers = userAnswerRepository.findAllByGenderOrRegionOrCityOrIdentifierOrAgeBetween(gender, region, city, identifier, firstAge, secondAge);
+        ExcelExportUtils exportUtils = new ExcelExportUtils(null, answers);
         exportUtils.exportDataToExcel(response);
         return answers;
     }

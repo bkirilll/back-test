@@ -2,22 +2,21 @@ package ru.dictation.controllers;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.dictation.dto.AskDto;
 import ru.dictation.dto.QuestionDto;
 import ru.dictation.entities.Chapter;
 import ru.dictation.entities.Question;
 import ru.dictation.entities.QuestionAnswer;
-import ru.dictation.exceptions.BadRequestException;
 import ru.dictation.factories.QuestionDtoFactory;
 import ru.dictation.repositories.ChapterRepository;
 import ru.dictation.repositories.QuestionAnswerRepository;
 import ru.dictation.repositories.QuestionRepository;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +35,7 @@ public class QuestionController {
 
     private final ChapterRepository chapterRepository;
 
+    private final Logger logger = LogManager.getLogger(QuestionController.class);
 
     @GetMapping("/training/{type}")
     public List<QuestionDto> getAllQuestionsByType(@PathVariable(value = "type") Optional<Long> chapter_id) {
@@ -50,20 +50,29 @@ public class QuestionController {
                 .collect(Collectors.toList());
     }
 
-    //toDo
     @GetMapping("/test/")
     public List<QuestionDto> getQuestions() {
 
         List<Chapter> chapters = chapterRepository.findAll();
 
-        for (int i = 0; i < chapters.size(); i++) {
-            Stream<Question> questions = questionRepository.findAllByChapterId(chapters.get(i).getId());
+        List<Question> questions = new ArrayList<>();
 
 
-            return questions.map(questionDtoFactory::makeQuestionDto)
-                    .collect(Collectors.toList());
+        for (Chapter chapter : chapters) {
+
+            List<Question> list = questionRepository.findTenByChapterId(chapter.getId());
+
+            Collections.shuffle(list);
+
+            questions.addAll(list.stream().limit(10).toList());
+
         }
-        return null;
+
+
+        return questions.stream()
+                .map(questionDtoFactory::makeQuestionDto)
+                .collect(Collectors.toList());
+
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -105,6 +114,8 @@ public class QuestionController {
             questionAnswerRepository.saveAndFlush(answer);
         }
 
+        logger.info("Admin add question: " + question.getText() + " and answers:" + question.getAnswers());
+
         questionRepository.saveAndFlush(saveQuestion);
     }
 
@@ -132,6 +143,8 @@ public class QuestionController {
             questionAnswerRepository.saveAndFlush(answer);
         }
 
+        logger.info("Admin edit question: " + question.getText() + " and answers:" + question.getAnswers());
+
         questionRepository.saveAndFlush(saveQuestion.get());
 
     }
@@ -144,9 +157,9 @@ public class QuestionController {
 
         List<QuestionAnswer> answers = controllerHelper.getQuestionOrThrowException(id).getAnswers();
 
-        System.out.println(Arrays.stream(answers.toArray()).toArray());
-
         questionAnswerRepository.deleteAll(answers);
+
+        logger.info("Admin delete question: " + question.getText());
 
         questionRepository.delete(question);
     }

@@ -47,7 +47,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/training/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
-                        .requestMatchers("/export-to-excel").permitAll()
+                        .requestMatchers("/export-to-excel/**").permitAll()
                         .requestMatchers("/secure/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))

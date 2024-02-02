@@ -24,8 +24,5 @@ public class QuestionDto {
     String text;
 
     @NonNull
-    ChapterDto chapter;
-
-    @NonNull
     List<QuestionAnswerDto> answers;
 }

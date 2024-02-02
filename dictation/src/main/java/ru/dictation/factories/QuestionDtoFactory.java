@@ -26,9 +26,6 @@ public class QuestionDtoFactory {
         return QuestionDto.builder()
                 .id(question.getId())
                 .text(question.getText())
-                .chapter(
-                        chapterDtoFactory.makeChapterDto(question.getChapter())
-                )
                 .answers(
                         question
                                 .getAnswers()

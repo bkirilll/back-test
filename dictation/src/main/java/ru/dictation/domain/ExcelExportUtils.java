@@ -4,12 +4,12 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import ru.dictation.entities.QuestionStat;
 import ru.dictation.entities.UserAnswer;
 
 import java.io.IOException;
@@ -21,10 +21,14 @@ public class ExcelExportUtils {
 
     private XSSFSheet sheet;
 
+    private List<QuestionStat> questionStatList;
+
     private List<UserAnswer> userAnswerList;
 
-    public ExcelExportUtils(List<UserAnswer> userAnswerList) {
+
+    public ExcelExportUtils(List<QuestionStat> questionStats, List<UserAnswer> userAnswerList) {
         this.userAnswerList = userAnswerList;
+        this.questionStatList = questionStats;
         workbook = new XSSFWorkbook();
     }
 
@@ -47,7 +51,7 @@ public class ExcelExportUtils {
         cell.setCellStyle(style);
     }
 
-    private void createHeaderRow() {
+    private void createHeaderRowAnswers() {
 
         sheet = workbook.createSheet("Answers information");
         Row row = sheet.createRow(0);
@@ -77,6 +81,47 @@ public class ExcelExportUtils {
         createCell(row, 9, "Date of created", style);
     }
 
+    private void createHeaderRowQuestions() {
+
+        sheet = workbook.createSheet("Question stats");
+        Row row = sheet.createRow(0);
+        CellStyle style = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeight(20);
+        style.setFont(font);
+
+        createCell(row, 0, "Question stats", style);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+        font.setFontHeightInPoints((short) 10);
+        row = sheet.createRow(1);
+        font.setBold(true);
+        font.setFontHeight(16);
+        style.setFont(font);
+        createCell(row, 0, "ID", style);
+        createCell(row, 1, "Question", style);
+        createCell(row, 2, "All", style);
+        createCell(row, 3, "Right", style);
+    }
+
+    private void writeUserQuestionData() {
+        int rowCount = 2;
+        CellStyle style = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeight(14);
+        style.setFont(font);
+
+        for (QuestionStat questionStat : questionStatList) {
+            Row row = sheet.createRow(rowCount++);
+            int columnCount = 0;
+            createCell(row, columnCount++, questionStat.getId(), style);
+            createCell(row, columnCount++, questionStat.getQuestion(), style);
+            createCell(row, columnCount++, questionStat.getAllQuantity(), style);
+            createCell(row, columnCount++, questionStat.getRightQuantity(), style);
+        }
+    }
+
     private void writeUserAnswerData() {
 
         int rowCount = 2;
@@ -102,8 +147,17 @@ public class ExcelExportUtils {
         }
     }
 
+    public void exportQuestionDataToExcel(HttpServletResponse response) throws IOException {
+        createHeaderRowQuestions();
+        writeUserQuestionData();
+        ServletOutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        outputStream.close();
+    }
+
     public void exportDataToExcel(HttpServletResponse response) throws IOException {
-        createHeaderRow();
+        createHeaderRowAnswers();
         writeUserAnswerData();
         ServletOutputStream outputStream = response.getOutputStream();
         workbook.write(outputStream);

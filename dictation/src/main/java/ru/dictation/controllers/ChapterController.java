@@ -2,6 +2,8 @@ package ru.dictation.controllers;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.dictation.dto.ChapterDto;
@@ -21,6 +23,8 @@ public class ChapterController {
     private final ChapterDtoFactory chapterDtoFactory;
 
     private final ChapterRepository chapterRepository;
+
+    private final Logger logger = LogManager.getLogger(ChapterController.class);
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/chapters/{chapter_id}")
@@ -58,6 +62,9 @@ public class ChapterController {
     public void addChapter(@RequestBody Chapter chapter) {
         Chapter saveChapter = new Chapter();
         saveChapter.setDescription(chapter.getDescription());
+
+        logger.info("Admin add chapter: " + chapter.getDescription());
+
         chapterRepository.saveAndFlush(saveChapter);
     }
 
@@ -71,6 +78,15 @@ public class ChapterController {
 
         saveChapter.get().setDescription(chapter.getDescription());
 
+        logger.info("Admin edit chapter: " + chapter.getDescription());
+
         chapterRepository.saveAndFlush(saveChapter.get());
     }
+
+//    @PreAuthorize("hasRole('ADMIN')")
+//    @DeleteMapping("/secure/chapters/delete/{chapter_id}")
+//    public void deleteChapter(@PathVariable(value = "chapter_id") Long id) {
+//
+//
+//    }
 }
