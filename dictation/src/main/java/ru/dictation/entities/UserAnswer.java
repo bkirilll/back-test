@@ -7,7 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.util.Calendar;
 
 @Data
 @AllArgsConstructor
@@ -46,10 +50,11 @@ public class UserAnswer {
     @Column(name = "identifier")
     String identifier;
 
-    LocalDateTime dateOfCreated;
+    Date dateOfCreated;
 
     @PrePersist
     void init() {
-        dateOfCreated = LocalDateTime.now();
+        Calendar cal = Calendar.getInstance();
+        dateOfCreated = new java.sql.Date(cal.getTimeInMillis());
     }
 }

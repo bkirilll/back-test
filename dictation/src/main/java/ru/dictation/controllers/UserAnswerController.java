@@ -15,6 +15,9 @@ import ru.dictation.services.MailSenderService;
 import ru.dictation.services.UserAnswerService;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 @RestController
@@ -60,7 +63,9 @@ public class UserAnswerController {
             @RequestParam(value = "identifier", required = false) String identifier,
             @RequestParam(value = "first_age", required = false) int firstAge,
             @RequestParam(value = "second_age", required = false) int secondAge,
-            HttpServletResponse response) throws IOException {
+            @RequestParam(value = "first_date", required = false) String firstDate,
+            @RequestParam(value = "second_date", required = false) String secondDate,
+            HttpServletResponse response) throws IOException, ParseException {
 
         response.setContentType("application/octet-stream");
         String headerKey = "Content-Disposition";
@@ -70,6 +75,6 @@ public class UserAnswerController {
 
         logger.info("Admin saves excel with users answers");
 
-        userAnswerService.exportUserAnswerToExcel(response, gender, region, city, identifier, firstAge, secondAge);
+        userAnswerService.exportUserAnswerToExcel(response, gender, region, city, identifier, firstAge, secondAge, firstDate, secondDate);
     }
 }
