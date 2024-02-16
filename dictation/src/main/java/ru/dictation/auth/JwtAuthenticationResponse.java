@@ -1,4 +1,4 @@
-package ru.dictation.domain.dto;
+package ru.dictation.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

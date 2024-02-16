@@ -3,10 +3,9 @@ package ru.dictation.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ru.dictation.domain.dto.JwtAuthenticationResponse;
-import ru.dictation.domain.dto.SignInRequest;
+import ru.dictation.auth.JwtAuthenticationResponse;
+import ru.dictation.auth.SignInRequest;
 
 @Service
 @RequiredArgsConstructor

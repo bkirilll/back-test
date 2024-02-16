@@ -3,6 +3,7 @@ package ru.dictation.controllers;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,31 +19,29 @@ import java.io.IOException;
 @RestController
 @RequiredArgsConstructor
 @Transactional
+@Log4j2
 public class QuestionStatController {
 
     private final QuestionStatRepository questionStatRepository;
 
-    private final QuestionRepository questionRepository;
-
     private final QuestionStatService questionStatService;
 
-    private final Logger logger = LogManager.getLogger(QuestionStatController.class);
-
+    private final ControllerHelper controllerHelper;
 
     @PostMapping("/test/{question_id}")
     public void saveQuestionStat(@PathVariable(value = "question_id") Long questionId,
-                                 @RequestParam(value = "validaty") boolean validaty) {
+                                 @RequestParam(value = "validate") boolean validate) {
 
-        Question question = questionRepository.findById(questionId).get();
+        Question question = controllerHelper.getQuestionOrThrowException(questionId);
 
         QuestionStat questionStatFromDb = questionStatRepository.findByQuestion(question.getText());
 
         if (questionStatFromDb != null) {
             questionStatFromDb.setAllQuantity(questionStatFromDb.getAllQuantity() + 1);
-            if (validaty && questionStatFromDb.getRightQuantity() != null) {
+            if (validate && questionStatFromDb.getRightQuantity() != null) {
                 questionStatFromDb.setRightQuantity(questionStatFromDb.getRightQuantity() + 1);
             }
-            if (validaty && questionStatFromDb.getRightQuantity() == null) {
+            if (validate && questionStatFromDb.getRightQuantity() == null) {
                 questionStatFromDb.setRightQuantity(1L);
             }
             questionStatRepository.saveAndFlush(questionStatFromDb);
@@ -50,7 +49,7 @@ public class QuestionStatController {
             QuestionStat questionStat = new QuestionStat();
             questionStat.setQuestion(question.getText());
             questionStat.setAllQuantity(1L);
-            if (validaty) {
+            if (validate) {
                 questionStat.setRightQuantity(1L);
             }
             questionStatRepository.saveAndFlush(questionStat);
@@ -58,7 +57,7 @@ public class QuestionStatController {
     }
 
     @GetMapping("/export-to-excel/questions")
-    public void exportToExcelAnswers(HttpServletResponse response) throws IOException {
+    public void exportToExcelAnswers(HttpServletResponse response) {
 
         response.setContentType("application/octet-stream");
         String headerKey = "Content-Disposition";
@@ -66,7 +65,7 @@ public class QuestionStatController {
 
         response.setHeader(headerKey, headerValue);
 
-        logger.info("Admin saves questions stats");
+        log.info("Admin saves questions stats");
 
         questionStatService.exportQuestionsToExcel(response);
     }

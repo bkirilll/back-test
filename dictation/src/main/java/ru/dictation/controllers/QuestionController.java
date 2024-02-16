@@ -11,6 +11,7 @@ import ru.dictation.dto.QuestionDto;
 import ru.dictation.entities.Chapter;
 import ru.dictation.entities.Question;
 import ru.dictation.entities.QuestionAnswer;
+import ru.dictation.exceptions.BadRequestException;
 import ru.dictation.factories.QuestionDtoFactory;
 import ru.dictation.repositories.ChapterRepository;
 import ru.dictation.repositories.QuestionAnswerRepository;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 @RestController
 @RequiredArgsConstructor
 @Transactional
+@Log4j2
 public class QuestionController {
 
     private final QuestionDtoFactory questionDtoFactory;
@@ -35,14 +37,11 @@ public class QuestionController {
 
     private final ChapterRepository chapterRepository;
 
-    private final Logger logger = LogManager.getLogger(QuestionController.class);
-
     @GetMapping("/training/{type}")
-    public List<QuestionDto> getAllQuestionsByType(@PathVariable(value = "type") Optional<Long> chapter_id) {
-
+    public List<QuestionDto> getAllQuestionsByTypeForUsers(@PathVariable(value = "type") Optional<Long> chapter_id) {
 
         Stream<Question> questionStream = chapter_id
-                .map(questionRepository::findAllByChapterId)
+                .map(questionRepository::streamAllByChapterId)
                 .orElseGet(questionRepository::streamAllBy);
 
         return questionStream
@@ -51,7 +50,7 @@ public class QuestionController {
     }
 
     @GetMapping("/test/")
-    public List<QuestionDto> getQuestions() {
+    public List<QuestionDto> getTestQuestionsForUsers() {
 
         List<Chapter> chapters = chapterRepository.findAll();
 
@@ -60,14 +59,12 @@ public class QuestionController {
 
         for (Chapter chapter : chapters) {
 
-            List<Question> list = questionRepository.findTenByChapterId(chapter.getId());
+            List<Question> list = questionRepository.findAllByChapterId(chapter.getId());
 
             Collections.shuffle(list);
 
             questions.addAll(list.stream().limit(10).toList());
-
         }
-
 
         return questions.stream()
                 .map(questionDtoFactory::makeQuestionDto)
@@ -77,11 +74,13 @@ public class QuestionController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/questions/{question_id}")
-    public QuestionDto getQuestionById(@PathVariable(value = "question_id") Long id) {
+    public QuestionDto getQuestionById(@PathVariable(value = "question_id") Optional<Long> optionalId) {
 
-        Optional<Question> question = questionRepository.findById(id);
+        Question question = optionalId
+                .map(controllerHelper::getQuestionOrThrowException)
+                .orElseGet(() -> Question.builder().build());
 
-        return questionDtoFactory.makeQuestionDto(question.get());
+        return questionDtoFactory.makeQuestionDto(question);
     }
 
 
@@ -99,22 +98,28 @@ public class QuestionController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/secure/questions/add")
     @ResponseBody
-    public void addQuestion(@RequestBody Question question) {
+    public void createQuestion(@RequestBody Question question) {
 
-        Optional<Chapter> chapter = chapterRepository.findById(question.getChapter().getId());
+        Chapter chapter = controllerHelper.getChapterOrThrowException(question.getChapter().getId());
 
         List<QuestionAnswer> answers = question.getAnswers();
 
+        if (question.getText().isBlank()) {
+            throw new BadRequestException("Question can't be empty");
+        } else if (question.getAnswers().isEmpty()) {
+            throw new BadRequestException("Answers can't be empty");
+        }
+
         Question saveQuestion = new Question();
         saveQuestion.setText(question.getText());
-        saveQuestion.setChapter(chapter.get());
+        saveQuestion.setChapter(chapter);
         saveQuestion.setAnswers(answers);
 
         for (QuestionAnswer answer : answers) {
             questionAnswerRepository.saveAndFlush(answer);
         }
 
-        logger.info("Admin add question: " + question.getText() + " and answers:" + question.getAnswers());
+        log.info("Admin add question: " + question.getText() + " and answers:" + question.getAnswers());
 
         questionRepository.saveAndFlush(saveQuestion);
     }
@@ -125,27 +130,27 @@ public class QuestionController {
     public void editQuestion(@RequestBody Question question,
                              @PathVariable(value = "question_id") Long id) {
 
-        Optional<Question> saveQuestion = questionRepository.findById(id);
+        Question questionFromDb = controllerHelper.getQuestionOrThrowException(id);
 
-        List<QuestionAnswer> saveAnswers = controllerHelper.getQuestionOrThrowException(id).getAnswers();
+        List<QuestionAnswer> answersFromDb = questionFromDb.getAnswers();
 
         List<QuestionAnswer> answers = question.getAnswers();
 
-        saveQuestion.get().setText(question.getText());
-        saveQuestion.get().setChapter(chapterRepository.findById(question.getChapter().getId()).get());
+        questionFromDb.setText(question.getText());
+        questionFromDb.setChapter(controllerHelper.getChapterOrThrowException(question.getChapter().getId()));
 
-        for (int i = 0; i < saveAnswers.size(); i++) {
-            saveAnswers.get(i).setText(answers.get(i).getText());
-            saveAnswers.get(i).setValidaty(answers.get(i).isValidaty());
+        for (int i = 0; i < answersFromDb.size(); i++) {
+            answersFromDb.get(i).setText(answers.get(i).getText());
+            answersFromDb.get(i).setValidaty(answers.get(i).isValidaty());
         }
 
-        for (QuestionAnswer answer : saveAnswers) {
+        for (QuestionAnswer answer : answersFromDb) {
             questionAnswerRepository.saveAndFlush(answer);
         }
 
-        logger.info("Admin edit question: " + question.getText() + " and answers:" + question.getAnswers());
+        log.info("Admin edit question: " + question.getText() + " and answers:" + question.getAnswers());
 
-        questionRepository.saveAndFlush(saveQuestion.get());
+        questionRepository.saveAndFlush(questionFromDb);
 
     }
 
@@ -155,11 +160,11 @@ public class QuestionController {
 
         Question question = controllerHelper.getQuestionOrThrowException(id);
 
-        List<QuestionAnswer> answers = controllerHelper.getQuestionOrThrowException(id).getAnswers();
+        List<QuestionAnswer> answers = question.getAnswers();
 
         questionAnswerRepository.deleteAll(answers);
 
-        logger.info("Admin delete question: " + question.getText());
+        log.info("Admin delete question: " + question.getText());
 
         questionRepository.delete(question);
     }

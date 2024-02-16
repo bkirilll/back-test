@@ -2,91 +2,99 @@ package ru.dictation.controllers;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.dictation.dto.ChapterDto;
 import ru.dictation.entities.Chapter;
+import ru.dictation.exceptions.BadRequestException;
 import ru.dictation.factories.ChapterDtoFactory;
 import ru.dictation.repositories.ChapterRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 @Transactional
+@Log4j2
 public class ChapterController {
 
     private final ChapterDtoFactory chapterDtoFactory;
 
     private final ChapterRepository chapterRepository;
 
-    private final Logger logger = LogManager.getLogger(ChapterController.class);
+    private final ControllerHelper controllerHelper;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/chapters/{chapter_id}")
-    public ChapterDto getChapterById(@PathVariable(value = "chapter_id") Long id) {
+    public ChapterDto getChapterById(@PathVariable(value = "chapter_id") Optional<Long> optionalId) {
 
-        Optional<Chapter> chapter = chapterRepository.findById(id);
+        Chapter chapter = optionalId
+                .map(controllerHelper::getChapterOrThrowException)
+                .orElseGet(() -> Chapter.builder().build());
 
-        return chapterDtoFactory.makeChapterDto(chapter.get());
+        return chapterDtoFactory.makeChapterDto(chapter);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/chapters/")
-    public List<ChapterDto> getAllChapters() {
+    public List<ChapterDto> getAllChaptersForAdmin() {
 
-        List<Chapter> chapters = chapterRepository.findAll();
-
-        return chapters.stream()
-                .map(chapterDtoFactory::makeChapterDto)
-                .collect(Collectors.toList());
+        return getAllChapters();
     }
 
     @GetMapping("/training/")
-    public List<ChapterDto> getAllChapter() {
+    public List<ChapterDto> getAllChapterForUsers() {
 
-        List<Chapter> chapters = chapterRepository.findAll();
-
-        return chapters.stream()
-                .map(chapterDtoFactory::makeChapterDto)
-                .collect(Collectors.toList());
+        return getAllChapters();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/secure/chapters/add")
     @ResponseBody
-    public void addChapter(@RequestBody Chapter chapter) {
+    public void createChapter(@RequestBody Chapter chapter) {
+
+        if (chapter.getDescription().isBlank()) {
+            throw new BadRequestException("Chapter description can't be empty. ");
+        }
+
         Chapter saveChapter = new Chapter();
         saveChapter.setDescription(chapter.getDescription());
 
-        logger.info("Admin add chapter: " + chapter.getDescription());
+        log.info("Admin add chapter. Description: " + saveChapter.getDescription());
 
         chapterRepository.saveAndFlush(saveChapter);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/secure/chapters/edit/{chapter_id}")
+    @PutMapping("/secure/chapters/{chapter_id}/edit")
     @ResponseBody
     public void editChapter(@RequestBody Chapter chapter,
                             @PathVariable(value = "chapter_id") Long id) {
 
-        Optional<Chapter> saveChapter = chapterRepository.findById(id);
+        if (chapter.getDescription().isBlank()) {
+            throw new BadRequestException("Chapter description can't be empty. ");
+        }
 
-        saveChapter.get().setDescription(chapter.getDescription());
+        Chapter chapterFromDb = controllerHelper.getChapterOrThrowException(id);
 
-        logger.info("Admin edit chapter: " + chapter.getDescription());
+        chapterFromDb.setDescription(chapter.getDescription());
 
-        chapterRepository.saveAndFlush(saveChapter.get());
+        log.info("Admin edit chapter: " + chapter.getDescription());
+
+        chapterRepository.saveAndFlush(chapterFromDb);
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @DeleteMapping("/secure/chapters/delete/{chapter_id}")
-//    public void deleteChapter(@PathVariable(value = "chapter_id") Long id) {
-//
-//
-//    }
+    private List<ChapterDto> getAllChapters() {
+        List<Chapter> chapters = chapterRepository.findAll();
+
+        return chapters.stream()
+                .map(chapterDtoFactory::makeChapterDto)
+                .collect(Collectors.toList());
+    }
 }

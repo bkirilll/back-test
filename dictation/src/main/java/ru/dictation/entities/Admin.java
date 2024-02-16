@@ -1,10 +1,10 @@
-package ru.dictation.domain.model;
-
+package ru.dictation.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.dictation.entities.enums.Role;
 
 import java.util.Collection;
 import java.util.List;

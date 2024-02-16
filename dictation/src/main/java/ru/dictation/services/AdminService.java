@@ -5,14 +5,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.dictation.domain.model.Admin;
-import ru.dictation.domain.model.Role;
+import ru.dictation.entities.Admin;
 import ru.dictation.repositories.AdminRepository;
 
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+
+
     private final AdminRepository repository;
 
 

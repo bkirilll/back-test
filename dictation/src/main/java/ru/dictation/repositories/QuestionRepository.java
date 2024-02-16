@@ -13,7 +13,8 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     Stream<Question> streamAllBy();
 
-    Stream<Question> findAllByChapterId(Long chapterId);
+    Stream<Question> streamAllByChapterId(Long chapterId);
 
-    List<Question> findTenByChapterId(Long chapterId);
+    List<Question> findAllByChapterId(Long chapterId);
+
 }

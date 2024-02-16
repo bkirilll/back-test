@@ -4,7 +4,7 @@ package ru.dictation.services;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.dictation.domain.ExcelExportUtils;
+import ru.dictation.entities.ExcelExportUtils;
 import ru.dictation.entities.QuestionStat;
 import ru.dictation.repositories.QuestionStatRepository;
 
@@ -17,11 +17,17 @@ public class QuestionStatService {
 
     private final QuestionStatRepository questionStatRepository;
 
-    public List<QuestionStat> exportQuestionsToExcel(HttpServletResponse response) throws IOException {
+    public List<QuestionStat> exportQuestionsToExcel(HttpServletResponse response) {
 
         List<QuestionStat> questionStats = questionStatRepository.findAll();
         ExcelExportUtils exportUtils = new ExcelExportUtils(questionStats, null);
-        exportUtils.exportQuestionDataToExcel(response);
+
+        try {
+            exportUtils.exportQuestionDataToExcel(response);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         return questionStats;
     }
 

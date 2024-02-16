@@ -1,7 +1,7 @@
 package ru.dictation.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.dictation.domain.model.Admin;
+import ru.dictation.entities.Admin;
 
 import java.util.Optional;
 
